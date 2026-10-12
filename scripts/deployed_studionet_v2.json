@@ -1,0 +1,8 @@
+{
+  "address": "0x0D2095a3e98B472c66EfF63E7990d00005d503B3",
+  "deploy_tx": "0xb08e8181ee951eb60dab0a3ad7696c1bdb6ae5901eadfc894f6f70234018c38d",
+  "code_sha256": "3db92854250f4a0622b2e7cb04190b53fa5578cb3f680e77a52e36b416ce8fc3",
+  "leader_only": false,
+  "contract": "contracts/matchstake.py",
+  "deployed_at": "2026-10-12T06:05:15Z"
+}
