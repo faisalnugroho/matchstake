@@ -394,5 +394,72 @@
     "k2": "MSK-5-1791785721",
     "o3": "6",
     "k3": "MSK-6-1791785803"
+  },
+  {
+    "ts": "2026-10-12T06:17:26Z",
+    "event": "raw_urls_synced"
+  },
+  {
+    "ts": "2026-10-12T06:18:20Z",
+    "event": "tx",
+    "fn": "evaluate_offer",
+    "attempt": 1,
+    "tx": "0x56f5e7985f8571a6c1a7a6c2da4d234a6491884757f9f83e39f9d25ac9b3ade1",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [252, 8, 123, 34, 118, 101, 114, 100, 105, 99, 116, 34, 58, 32, 34, 77, 65, 84, 67, 72, 34, 44, 32, 34, 100, 101, 112, 111, 115, 105, 116, 95, 109, 111, 118, 101, 100, 34, 58, 32, 116, 114, 117, 101, 44, 32, 34, 114, 101, 113, 117, 101, 115, 116, 95, 105, 100, 34, 58, 32, 34, 52, 34, 44, 32, 34, 115, 116, 97, 116, 117, 115, 34, 58, 32, 34, 77, 65, 84, 67, 72, 69, 68, 34, 44, 32, 34, 100, 1"
+  },
+  {
+    "ts": "2026-10-12T06:18:21Z",
+    "event": "evaluated",
+    "oid": "4",
+    "ok": true,
+    "verdict": "MATCH",
+    "offer_status": "MATCHED",
+    "offer_verdict": "{\"verdict\": \"MATCH\", \"labels\": [{\"criterion\": 0, \"evidence\": \"Price: 35 GEN per mug.\", \"status\": \"PASS\"}, {\"criterion\": 1, \"evidence\": \"Ships within 5 business days worldwide.\", \"status\": \"PASS\"}]}"
+  },
+  {
+    "ts": "2026-10-12T06:19:09Z",
+    "event": "tx",
+    "fn": "evaluate_offer",
+    "attempt": 1,
+    "tx": "0xd604ee53e8e59ab553f8ec8074ea478b500964db2b661d71b15709d718cc40f1",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [252, 8, 123, 34, 118, 101, 114, 100, 105, 99, 116, 34, 58, 32, 34, 77, 65, 84, 67, 72, 34, 44, 32, 34, 100, 101, 112, 111, 115, 105, 116, 95, 109, 111, 118, 101, 100, 34, 58, 32, 116, 114, 117, 101, 44, 32, 34, 114, 101, 113, 117, 101, 115, 116, 95, 105, 100, 34, 58, 32, 34, 53, 34, 44, 32, 34, 115, 116, 97, 116, 117, 115, 34, 58, 32, 34, 77, 65, 84, 67, 72, 69, 68, 34, 44, 32, 34, 100, 1"
+  },
+  {
+    "ts": "2026-10-12T06:19:10Z",
+    "event": "evaluated",
+    "oid": "5",
+    "ok": true,
+    "verdict": "MATCH",
+    "offer_status": "MATCHED",
+    "offer_verdict": "{\"verdict\": \"MATCH\", \"labels\": [{\"criterion\": 0, \"evidence\": \"Price: 35 GEN per mug.\", \"status\": \"PASS\"}, {\"criterion\": 1, \"evidence\": \"Ships within 5 business days worldwide.\", \"status\": \"PASS\"}]}"
+  },
+  {
+    "ts": "2026-10-12T06:19:53Z",
+    "event": "tx",
+    "fn": "evaluate_offer",
+    "attempt": 1,
+    "tx": "0x22f6096f9b3645e8a0096a155411e2da55e1928deb5ec8375153426f79036eb0",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [156, 3, 123, 34, 118, 101, 114, 100, 105, 99, 116, 34, 58, 32, 34, 73, 78, 67, 79, 78, 67, 76, 85, 83, 73, 86, 69, 34, 44, 32, 34, 100, 101, 112, 111, 115, 105, 116, 95, 109, 111, 118, 101, 100, 34, 58, 32, 102, 97, 108, 115, 101, 125], 'readable': '\"{\\\\\"verdict\\\\\": \\\\\"INCONCLUSIVE\\\\\", \\\\\"deposit_moved\\\\\": false}\"'}"
+  },
+  {
+    "ts": "2026-10-12T06:19:54Z",
+    "event": "evaluated",
+    "oid": "6",
+    "ok": true,
+    "verdict": "INCONCLUSIVE",
+    "offer_status": "INCONCLUSIVE",
+    "offer_verdict": "{\"verdict\": \"INCONCLUSIVE\", \"labels\": []}"
+  },
+  {
+    "ts": "2026-10-12T06:19:58Z",
+    "event": "failsafe_state",
+    "request_status": "OPEN",
+    "seller_claimable": "300000000000000000"
   }
 ]
