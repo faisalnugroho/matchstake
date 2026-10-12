@@ -231,5 +231,75 @@
     "result_name": "MAJORITY_AGREE",
     "exec": "SUCCESS",
     "code_sha256": "3db92854250f4a0622b2e7cb04190b53fa5578cb3f680e77a52e36b416ce8fc3"
+  },
+  {
+    "ts": "2026-10-12T06:07:56Z",
+    "event": "tx",
+    "fn": "create_request",
+    "attempt": 1,
+    "tx": "0xca6aadddfa3a80948973409ff70134ccede29136bf3eed0c3f0ca781024912b4",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [12, 49], 'readable': '\"1\"'}"
+  },
+  {
+    "ts": "2026-10-12T06:08:37Z",
+    "event": "tx",
+    "fn": "submit_offer",
+    "attempt": 1,
+    "tx": "0x59267059b88bc4b2f45865fcd487752beaae470d2d02f6a9c39d20d968c43189",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [12, 49], 'readable': '\"1\"'}"
+  },
+  {
+    "ts": "2026-10-12T06:09:15Z",
+    "event": "tx",
+    "fn": "create_request",
+    "attempt": 1,
+    "tx": "0x53c2e3152b3cc496a3663742422d743642a256db006c7f8ef8de8e11f330ec49",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [12, 50], 'readable': '\"2\"'}"
+  },
+  {
+    "ts": "2026-10-12T06:09:53Z",
+    "event": "tx",
+    "fn": "submit_offer",
+    "attempt": 1,
+    "tx": "0x0a30864ac011eb5e704e098d959ae545a59724f4d1b213936e6e87122e3527c4",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [12, 50], 'readable': '\"2\"'}"
+  },
+  {
+    "ts": "2026-10-12T06:10:38Z",
+    "event": "tx",
+    "fn": "create_request",
+    "attempt": 1,
+    "tx": "0xc192bcc3cb93d5c861e322833297fd8c7f65d4c9918ab259d6c5b5006bdc6b3d",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [12, 51], 'readable': '\"3\"'}"
+  },
+  {
+    "ts": "2026-10-12T06:11:17Z",
+    "event": "tx",
+    "fn": "submit_offer",
+    "attempt": 1,
+    "tx": "0x7fd1f41248e6b353a6ff63d2c4a1b28d9d58fcbe0e3d80ce9953d030534da838",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [12, 51], 'readable': '\"3\"'}"
+  },
+  {
+    "ts": "2026-10-12T06:11:19Z",
+    "event": "prep_done",
+    "o1": "1",
+    "k1": "MSK-1-1791785279",
+    "o2": "2",
+    "k2": "MSK-2-1791785357",
+    "o3": "3",
+    "k3": "MSK-3-1791785441"
   }
 ]
