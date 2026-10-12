@@ -148,7 +148,14 @@ def submit(rid, path):
 def evaluate(oid):
     ok, p = wd("evaluate_offer", [oid])
     offer = json.loads(read("get_offer", [oid]))
-    verdict = p.get("verdict") if isinstance(p, dict) else None
+    verdict = None
+    try:
+        ov = json.loads(offer.get("verdict", "") or "{}")
+        verdict = ov.get("verdict")
+    except Exception:
+        pass
+    if verdict is None and isinstance(p, dict):
+        verdict = p.get("verdict")
     log("evaluated", oid=oid, ok=ok, verdict=verdict,
         offer_status=offer["status"],
         offer_verdict=str(offer.get("verdict", ""))[:500])

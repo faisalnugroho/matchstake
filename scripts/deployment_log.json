@@ -461,5 +461,75 @@
     "event": "failsafe_state",
     "request_status": "OPEN",
     "seller_claimable": "300000000000000000"
+  },
+  {
+    "ts": "2026-10-12T06:23:17Z",
+    "event": "tx",
+    "fn": "evaluate_offer",
+    "attempt": 1,
+    "tx": "0xf59d69f7e3898156e5a8f37733be994e28a8363c65d001f31d4878de79de9b4a",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [156, 3, 123, 34, 118, 101, 114, 100, 105, 99, 116, 34, 58, 32, 34, 73, 78, 67, 79, 78, 67, 76, 85, 83, 73, 86, 69, 34, 44, 32, 34, 100, 101, 112, 111, 115, 105, 116, 95, 109, 111, 118, 101, 100, 34, 58, 32, 102, 97, 108, 115, 101, 125], 'readable': '\"{\\\\\"verdict\\\\\": \\\\\"INCONCLUSIVE\\\\\", \\\\\"deposit_moved\\\\\": false}\"'}"
+  },
+  {
+    "ts": "2026-10-12T06:23:18Z",
+    "event": "evaluated",
+    "oid": "6",
+    "ok": true,
+    "verdict": "INCONCLUSIVE",
+    "offer_status": "INCONCLUSIVE",
+    "offer_verdict": "{\"verdict\": \"INCONCLUSIVE\", \"labels\": []}"
+  },
+  {
+    "ts": "2026-10-12T06:25:51Z",
+    "event": "cache_probe",
+    "url": "https://raw.githubusercontent.com/faisalnugroho/matchstake/main/testdata/v2_listing3.html",
+    "has_marker": true,
+    "bytes": 246
+  },
+  {
+    "ts": "2026-10-12T06:26:49Z",
+    "event": "tx",
+    "fn": "evaluate_offer",
+    "tx": "0x89c92080766a3195eaeb99805d173718310283731b25ed51ba860b0d88589cda",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [252, 8, 123, 34, 118, 101, 114, 100, 105, 99, 116, 34, 58, 32, 34, 77, 65, 84, 67, 72, 34, 44, 32, 34, 100, 101, 112, 111, 115, 105, 116, 95, 109, 111, 118, 101, 100, 34, 58, 32, 116, 114, 117, 101, 44, 32, 34, 114, 101, 113, 117, 101, 115, 116, 95, 105, 100, 34, 58, 32, 34, 54, 34, 44, 32, 34, 115, 116, 97, 116, 117, 115, 34, 58, 32, 34, 77, 65, 84, 67, 72, 69, 68, 34, 44, 32, 34, 100, 1"
+  },
+  {
+    "ts": "2026-10-12T06:26:50Z",
+    "event": "reeval_attempt",
+    "attempt": 1,
+    "verdict": "MATCH",
+    "offer_status": "MATCHED"
+  },
+  {
+    "ts": "2026-10-12T06:27:34Z",
+    "event": "pre_claim",
+    "account": "0x185eCfD4E9b0Fe001494FB3579E1882606c6E5ED",
+    "claimable": "400000000000000000"
+  },
+  {
+    "ts": "2026-10-12T06:28:16Z",
+    "event": "claim_tx",
+    "tx": "0xd1ba3acbb74312702ed9621ebfd1154187916214cbab7f1865f655df445b7f05",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [140, 2, 123, 34, 99, 108, 97, 105, 109, 101, 100, 34, 58, 32, 34, 52, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 34, 125], 'readable': '\"{\\\\\"claimed\\\\\": \\\\\"4000000000"
+  },
+  {
+    "ts": "2026-10-12T06:28:19Z",
+    "event": "post_claim",
+    "claimable": "0",
+    "stats": {
+      "requests_created": "6",
+      "offers_submitted": "6",
+      "matches": "4",
+      "no_matches": "0",
+      "inconclusives": "2",
+      "expired": "0",
+      "paid_out": "400000000000000000"
+    }
   }
 ]
