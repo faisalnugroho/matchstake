@@ -1,0 +1,91 @@
+[
+  {
+    "ts": "2026-10-12T05:31:23Z",
+    "event": "deploy_start",
+    "leader_only": false,
+    "account": "0x185eCfD4E9b0Fe001494FB3579E1882606c6E5ED"
+  },
+  {
+    "ts": "2026-10-12T05:32:04Z",
+    "event": "deploy_ok",
+    "address": "0xd5AD9EC29F722829bc66F47f8c0bE791303b0518",
+    "tx": "0x4fe2259238489ea806b7e7f9669a7eb7eff985dec7ef18c494357301079479e2",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS"
+  },
+  {
+    "ts": "2026-10-12T05:32:06Z",
+    "event": "smoke_start",
+    "address": "0xd5AD9EC29F722829bc66F47f8c0bE791303b0518"
+  },
+  {
+    "ts": "2026-10-12T05:32:46Z",
+    "event": "tx",
+    "fn": "create_request",
+    "tx": "0xbc5508518228fb3c8f514c54df587bea939d5d6d4d7ea9a67a7c3e742850a647",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [12, 49], 'readable': '\"1\"'}"
+  },
+  {
+    "ts": "2026-10-12T05:33:25Z",
+    "event": "tx",
+    "fn": "submit_offer",
+    "tx": "0x5867ae5e50d603d29cda5820407430587da6d54a322e9323ef12f91f4e41de37",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "ERROR",
+    "payload": "exit_code 1"
+  },
+  {
+    "ts": "2026-10-12T05:38:05Z",
+    "event": "tx",
+    "fn": "create_request",
+    "tx": "0x04f32e8211f5a0e7597e05bcfceeccd5e31809d92cc9e992531894210712a479",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [12, 50], 'readable': '\"2\"'}"
+  },
+  {
+    "ts": "2026-10-12T05:38:05Z",
+    "event": "request_created",
+    "rid": "{'raw': [12, 50], 'readable': '\"2\"'}"
+  },
+  {
+    "ts": "2026-10-12T05:38:49Z",
+    "event": "tx",
+    "fn": "submit_offer",
+    "tx": "0x920328a6747c58582f64d1eac6456cbeb2dfb32574df05018f99332c199a0e48",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "ERROR",
+    "payload": "exit_code 1"
+  },
+  {
+    "ts": "2026-10-12T05:41:27Z",
+    "event": "tx",
+    "fn": "create_request",
+    "tx": "0xb1250c158a8c589c40ed1fd2608dc03968cacba560df8b5051cf3d0742b16d9e",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [12, 51], 'readable': '\"3\"'}"
+  },
+  {
+    "ts": "2026-10-12T05:41:27Z",
+    "event": "request_created",
+    "rid": "3"
+  },
+  {
+    "ts": "2026-10-12T05:42:03Z",
+    "event": "tx",
+    "fn": "submit_offer",
+    "tx": "0x756539bbb865357343350c08f6e4ab16a0733baf1dbd2ad1951abe6fd189928c",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [12, 49], 'readable': '\"1\"'}"
+  },
+  {
+    "ts": "2026-10-12T05:42:05Z",
+    "event": "offer_created",
+    "oid": "1",
+    "key": "MSK-1-1791783688"
+  }
+]

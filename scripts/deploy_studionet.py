@@ -77,7 +77,7 @@ def deploy():
         log("fund_skip", error=str(e)[:200])
     code = CONTRACT.read_text()
     tx = client.deploy_contract(
-        code=code, account=account, constructor_args=[],
+        code=code, account=account, args=[],
         leader_only=LEADER_ONLY,
     )
     receipt, ok, rn, ex = wait_final(client, tx)
@@ -121,21 +121,24 @@ def smoke():
             payload=str(payload)[:300] if payload else None)
         return ok, payload, receipt
 
-    ok, rid, _ = wd("create_request",
-                    ["Ceramic mugs",
-                     json.dumps(["price under 50 GEN", "ships within 7 days"]),
-                     "3600"],
-                    value=10**17)
-    assert ok and rid, "create_request failed"
+    ok, rid_raw, _ = wd("create_request",
+                        ["Ceramic mugs",
+                         json.dumps(["price under 50 GEN", "ships within 7 days"]),
+                         "3600"],
+                        value=10**17)
+    assert ok and rid_raw, "create_request failed"
+    # readable payload is a JSON string like '"1"'
+    rid = str(rid_raw).strip('"') if not isinstance(rid_raw, dict) else str(rid_raw)
+    log("request_id", rid=rid)
 
-    ok, oid, _ = wd("submit_offer",
-                    [str(rid), "https://raw.githubusercontent.com/"
-                     "faisalnugroho/matchstake/main/testdata/listing.html",
-                     "demo offer"])
-    assert ok and oid, "submit_offer failed"
-    offer_id = str(oid) if oid else "1"
+    ok, oid_raw, _ = wd("submit_offer",
+                        [rid, "https://raw.githubusercontent.com/"
+                         "faisalnugroho/matchstake/main/testdata/listing.html",
+                         "demo offer"])
+    assert ok and oid_raw, "submit_offer failed"
+    offer_id = str(oid_raw).strip('"')
 
-    ok, off, _ = wd("get_offer_view", [])  # placeholder; use read below
+    ok, off, _ = wd("noop", [])  # not used; listing key read via view below
     # read the listing key via a view call
     offer = client.read_contract(address=addr, function_name="get_offer",
                                  args=[offer_id])
@@ -147,19 +150,21 @@ def smoke():
     log("evaluate", verdict=verdict)
 
     # determinism: run a second fresh request/offer/evaluate round
-    ok, rid2, _ = wd("create_request",
-                     ["Ceramic mugs round 2",
-                      json.dumps(["price under 50 GEN", "ships within 7 days"]),
-                      "3600"],
-                     value=10**17)
-    ok, oid2, _ = wd("submit_offer",
-                     [str(rid2), "https://raw.githubusercontent.com/"
-                      "faisalnugroho/matchstake/main/testdata/listing2.html",
-                      "demo offer 2"])
+    ok, rid2_raw, _ = wd("create_request",
+                         ["Ceramic mugs round 2",
+                          json.dumps(["price under 50 GEN", "ships within 7 days"]),
+                          "3600"],
+                         value=10**17)
+    rid2 = str(rid2_raw).strip('"')
+    ok, oid2_raw, _ = wd("submit_offer",
+                         [rid2, "https://raw.githubusercontent.com/"
+                          "faisalnugroho/matchstake/main/testdata/listing2.html",
+                          "demo offer 2"])
+    oid2 = str(oid2_raw).strip('"')
     offer2 = client.read_contract(address=addr, function_name="get_offer",
-                                  args=[str(oid2) if oid2 else "2"])
+                                  args=[oid2])
     key2 = json.loads(offer2)["listing_key"]
-    ok, res2, _ = wd("evaluate_offer", [str(oid2) if oid2 else "2"])
+    ok, res2, _ = wd("evaluate_offer", [oid2])
     verdict2 = res2.get("verdict") if isinstance(res2, dict) else res2
     log("evaluate_round2", verdict=verdict2)
 
