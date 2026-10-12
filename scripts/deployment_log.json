@@ -87,5 +87,65 @@
     "event": "offer_created",
     "oid": "1",
     "key": "MSK-1-1791783688"
+  },
+  {
+    "ts": "2026-10-12T05:44:06Z",
+    "event": "tx",
+    "fn": "evaluate_offer",
+    "tx": "0x9b0b4ee0073f36493fcf2468818b233612b359f71f54f0e7dd75538d66cb457a",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [252, 8, 123, 34, 118, 101, 114, 100, 105, 99, 116, 34, 58, 32, 34, 77, 65, 84, 67, 72, 34, 44, 32, 34, 100, 101, 112, 111, 115, 105, 116, 95, 109, 111, 118, 101, 100, 34, 58, 32, 116, 114, 117, 101, 44, 32, 34, 114, 101, 113, 117, 101, 115, 116, 95, 105, 100, 34, 58, 32, 34, 51, 34, 44, 32,"
+  },
+  {
+    "ts": "2026-10-12T05:44:07Z",
+    "event": "evaluated",
+    "oid": "1",
+    "verdict": null,
+    "offer_status": "MATCHED",
+    "labels": "{\"verdict\": \"MATCH\", \"labels\": [{\"criterion\": 0, \"evidence\": \"Price: 35 GEN per mug.\", \"status\": \"PASS\"}, {\"criterion\": 1, \"evidence\": \"Ships within 5 business days worldwide.\", \"status\": \"PASS\"}]}"
+  },
+  {
+    "ts": "2026-10-12T05:44:11Z",
+    "event": "settlement",
+    "request_status": "MATCHED",
+    "winner": "1",
+    "seller_claimable": "100000000000000000"
+  },
+  {
+    "ts": "2026-10-12T05:44:13Z",
+    "event": "final_stats",
+    "requests_created": "3",
+    "offers_submitted": "1",
+    "matches": "1",
+    "no_matches": "0",
+    "inconclusives": "0",
+    "expired": "0",
+    "paid_out": "100000000000000000"
+  },
+  {
+    "ts": "2026-10-12T05:50:37Z",
+    "event": "tx",
+    "fn": "create_request",
+    "tx": "0xebabc4c13b5487f7b895deded1548a95e057f6c411e43a16bb29de4a62c25741",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [12, 52], 'readable': '\"4\"'}"
+  },
+  {
+    "ts": "2026-10-12T05:51:20Z",
+    "event": "tx",
+    "fn": "submit_offer",
+    "tx": "0x7aab165d1c08dfddf7ee572b5c56f0e38cdbdfbd5ac1a292a62b6f4005d1953f",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [12, 50], 'readable': '\"2\"'}"
+  },
+  {
+    "ts": "2026-10-12T05:51:22Z",
+    "event": "round2_prepped",
+    "rid": "4",
+    "oid": "2",
+    "key": "MSK-2-1791784239"
   }
 ]
