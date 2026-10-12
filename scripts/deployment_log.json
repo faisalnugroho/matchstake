@@ -301,5 +301,98 @@
     "k2": "MSK-2-1791785357",
     "o3": "3",
     "k3": "MSK-3-1791785441"
+  },
+  {
+    "ts": "2026-10-12T06:11:23Z",
+    "event": "raw_urls_synced"
+  },
+  {
+    "ts": "2026-10-12T06:12:07Z",
+    "event": "tx",
+    "fn": "evaluate_offer",
+    "attempt": 1,
+    "tx": "0xbf5d18d84987dbf04519e4061da106a222077e3d4a87f0caae4bb7fedb67576f",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [252, 8, 123, 34, 118, 101, 114, 100, 105, 99, 116, 34, 58, 32, 34, 77, 65, 84, 67, 72, 34, 44, 32, 34, 100, 101, 112, 111, 115, 105, 116, 95, 109, 111, 118, 101, 100, 34, 58, 32, 116, 114, 117, 101, 44, 32, 34, 114, 101, 113, 117, 101, 115, 116, 95, 105, 100, 34, 58, 32, 34, 49, 34, 44, 32, 34, 115, 116, 97, 116, 117, 115, 34, 58, 32, 34, 77, 65, 84, 67, 72, 69, 68, 34, 44, 32, 34, 100, 1"
+  },
+  {
+    "ts": "2026-10-12T06:12:10Z",
+    "event": "evaluated",
+    "oid": "1",
+    "ok": true,
+    "verdict": null,
+    "offer_status": "MATCHED",
+    "offer_verdict": "{\"verdict\": \"MATCH\", \"labels\": [{\"criterion\": 0, \"evidence\": \"Price: 35 GEN per mug.\", \"status\": \"PASS\"}, {\"criterion\": 1, \"evidence\": \"Ships within 5 business days worldwide.\", \"status\": \"PASS\"}]}"
+  },
+  {
+    "ts": "2026-10-12T06:13:59Z",
+    "event": "tx",
+    "fn": "create_request",
+    "attempt": 1,
+    "tx": "0xa74485aded81a46a674421997b5f9566570b5b3290150e237f422514d15511ee",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [12, 52], 'readable': '\"4\"'}"
+  },
+  {
+    "ts": "2026-10-12T06:14:40Z",
+    "event": "tx",
+    "fn": "submit_offer",
+    "attempt": 1,
+    "tx": "0xbb0418d58104d77f13c0d813dddcb5069c0baa26ebd827ffe42a08f9add640f8",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [12, 52], 'readable': '\"4\"'}"
+  },
+  {
+    "ts": "2026-10-12T06:15:19Z",
+    "event": "tx",
+    "fn": "create_request",
+    "attempt": 1,
+    "tx": "0x6953c991b7f78e68bcdb890a2629ed179ef033e06eac2e8955f299f15730f2b3",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [12, 53], 'readable': '\"5\"'}"
+  },
+  {
+    "ts": "2026-10-12T06:15:58Z",
+    "event": "tx",
+    "fn": "submit_offer",
+    "attempt": 1,
+    "tx": "0x726851745a3ee3e8440c596030a3df7deef6277e8f6a41749cf67f3845e133bb",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [12, 53], 'readable': '\"5\"'}"
+  },
+  {
+    "ts": "2026-10-12T06:16:42Z",
+    "event": "tx",
+    "fn": "create_request",
+    "attempt": 1,
+    "tx": "0x3bbb19ba7de0f0f800a9bcd45510e7f52f5e58a22184af37363c19c724f0fc7a",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [12, 54], 'readable': '\"6\"'}"
+  },
+  {
+    "ts": "2026-10-12T06:17:19Z",
+    "event": "tx",
+    "fn": "submit_offer",
+    "attempt": 1,
+    "tx": "0x8abb85febffe2211681cfa6e814ba45fd2c3c8208b1908166fc6ce474c1da51f",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [12, 54], 'readable': '\"6\"'}"
+  },
+  {
+    "ts": "2026-10-12T06:17:21Z",
+    "event": "prep_done",
+    "o1": "4",
+    "k1": "MSK-4-1791785643",
+    "o2": "5",
+    "k2": "MSK-5-1791785721",
+    "o3": "6",
+    "k3": "MSK-6-1791785803"
   }
 ]
