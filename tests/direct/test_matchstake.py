@@ -378,3 +378,49 @@ def test_validator_disagrees_on_divergent_statuses(setup):
     vm.clear_mocks()
     vm.mock_llm(*make_llm(key, FAIL_JSON))
     assert vm.run_validator() is False
+
+
+def test_inconclusive_offer_can_be_reevaluated_to_match(setup):
+    """Recovery path: marker missing -> INCONCLUSIVE (no money moved); after
+    the seller fixes the page, the SAME offer may be re-evaluated to MATCH."""
+    vm, contract = setup
+    rid = _create_request(vm, contract)
+    oid = contract.submit_offer(rid, "https://shop.example.com/mug", "")
+    key = json.loads(contract.get_offer(oid))["listing_key"]
+
+    # phase 1: page without the marker
+    vm.mock_web(r"https://shop\.example\.com/mug",
+                {"status": 200, "body": "<html>no marker yet</html>"})
+    vm.mock_llm(*make_llm(key, PASS_JSON))
+    assert json.loads(contract.evaluate_offer(oid))["verdict"] == "INCONCLUSIVE"
+    assert json.loads(contract.get_offer(oid))["status"] == "INCONCLUSIVE"
+    req = json.loads(contract.get_request(rid))
+    assert req["status"] == "OPEN"
+    assert json.loads(contract.get_claimable(req["buyer"]))["amount"] == "0"
+
+    # phase 2: seller added the marker; re-evaluate the same offer
+    vm.clear_mocks()
+    vm.mock_web(r"https://shop\.example\.com/mug",
+                {"status": 200, "body": GOOD_PAGE.format(key=key)})
+    vm.mock_llm(*make_llm(key, PASS_JSON))
+    res = json.loads(contract.evaluate_offer(oid))
+    assert res["verdict"] == "MATCH"
+    offer = json.loads(contract.get_offer(oid))
+    assert offer["status"] == "MATCHED"
+    assert json.loads(contract.get_claimable(offer["seller"]))["amount"] == str(10**18)
+    stats = json.loads(contract.get_stats())
+    assert stats["inconclusives"] == "1" and stats["matches"] == "1"
+
+
+def test_terminal_offer_cannot_be_reevaluated(setup):
+    """A MATCHED offer can never be re-evaluated (terminal state)."""
+    vm, contract = setup
+    rid = _create_request(vm, contract)
+    oid = contract.submit_offer(rid, "https://shop.example.com/mug", "")
+    key = json.loads(contract.get_offer(oid))["listing_key"]
+    vm.mock_web(r"https://shop\.example\.com/mug",
+                {"status": 200, "body": GOOD_PAGE.format(key=key)})
+    vm.mock_llm(*make_llm(key, PASS_JSON))
+    assert json.loads(contract.evaluate_offer(oid))["verdict"] == "MATCH"
+    with pytest.raises(Exception, match="offer_not_pending"):
+        contract.evaluate_offer(oid)

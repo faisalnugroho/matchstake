@@ -207,13 +207,17 @@ class MatchStake(gl.Contract):
         Every LLM / fetch failure path lands in INCONCLUSIVE and moves no
         money. MATCH earmarks the deposit to the seller; NO_MATCH returns it
         to the buyer's claimable pot.
+
+        An INCONCLUSIVE offer may be re-evaluated (fresh page content, e.g.
+        the seller added the required marker) until the request deadline;
+        this is the documented recovery path. Terminal states (MATCHED,
+        REJECTED) can never be re-evaluated.
         """
         offer = json.loads(self._get(self.offers, offer_id, "offer"))
-        assert offer["status"] == "PENDING", "offer_not_pending"
+        assert offer["status"] in ("PENDING", "INCONCLUSIVE"), "offer_not_pending"
         req = self._load_request(offer["request_id"])
         assert req["status"] == "OPEN", "request_not_open"
         assert self._now() <= int(req["deadline"]), "deadline_passed"
-
         listing_key = offer["listing_key"]
         criteria = json.loads(req["criteria"])
         url = offer["listing_url"]

@@ -189,5 +189,33 @@
     "rid": "5",
     "oid": "3",
     "key": "MSK-3-1791784477"
+  },
+  {
+    "ts": "2026-10-12T05:56:58Z",
+    "event": "tx",
+    "fn": "evaluate_offer",
+    "tx": "0xac6e16d976083a955307b8a6565e41ae8a68222b310b4bc942960e13198190f4",
+    "result_name": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "payload": "{'raw': [156, 3, 123, 34, 118, 101, 114, 100, 105, 99, 116, 34, 58, 32, 34, 73, 78, 67, 79, 78, 67, 76, 85, 83, 73, 86, 69, 34, 44, 32, 34, 100, 101, 112, 111, 115, 105, 116, 95, 109, 111, 118, 101, 100, 34, 58, 32, 102, 97, 108, 115, 101, 125], 'readable': '\"{\\\\\"verdict\\\\\": \\\\\"INCONCLUSIVE\\\\\", \\\\\"deposit_moved\\\\\": false}\"'}"
+  },
+  {
+    "ts": "2026-10-12T05:57:00Z",
+    "event": "evaluated",
+    "oid": "3",
+    "verdict": null,
+    "offer_status": "INCONCLUSIVE",
+    "offer_verdict": "{\"verdict\": \"INCONCLUSIVE\", \"labels\": []}"
+  },
+  {
+    "ts": "2026-10-12T05:57:01Z",
+    "event": "final_stats",
+    "requests_created": "5",
+    "offers_submitted": "3",
+    "matches": "2",
+    "no_matches": "0",
+    "inconclusives": "1",
+    "expired": "0",
+    "paid_out": "200000000000000000"
   }
 ]
