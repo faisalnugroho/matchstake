@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MatchStake — Trustless Buyer–Seller Matching</title>
+<script src="./genlayer-sdk.bundle.js"></script>
+<style>
+  :root{
+    --bg:#f7f6f3; --panel:#ffffff; --ink:#1a1d21; --muted:#6b7280;
+    --line:#e6e4df; --accent:#1f6f54; --accent-soft:#e7f2ec;
+    --warn:#8a6d1a; --warn-soft:#faf3df; --bad:#9c3838; --bad-soft:#f9e9e9;
+    --radius:14px; --shadow:0 1px 2px rgba(20,24,28,.05),0 8px 28px rgba(20,24,28,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font:15px/1.55 -apple-system,"Segoe UI",Inter,Roboto,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+  header{max-width:960px;margin:0 auto;padding:36px 20px 8px}
+  .brand{display:flex;align-items:baseline;gap:12px}
+  .brand h1{font-size:26px;font-weight:700;letter-spacing:-.02em}
+  .brand .tag{color:var(--muted);font-size:13px}
+  .sub{color:var(--muted);margin-top:6px;max-width:640px;font-size:14px}
+  main{max-width:960px;margin:0 auto;padding:20px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}
+  .card h2{font-size:15px;font-weight:650;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .card h2 .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+  label{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:12px 0 4px}
+  input,textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;background:#fbfbfa;color:var(--ink)}
+  input:focus,textarea:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+  textarea{resize:vertical;min-height:64px}
+  button{border:0;border-radius:10px;padding:10px 18px;font:inherit;font-weight:600;cursor:pointer;background:var(--ink);color:#fff;transition:opacity .15s}
+  button:hover{opacity:.88}
+  button.primary{background:var(--accent)}
+  button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+  .row>*{flex:1}
+  .status{font-size:13px;color:var(--muted);margin-top:10px;min-height:18px}
+  .status.ok{color:var(--accent)} .status.err{color:var(--bad)}
+  .badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600}
+  .b-OPEN{background:var(--accent-soft);color:var(--accent)}
+  .b-MATCHED{background:var(--accent);color:#fff}
+  .b-REFUNDED,.b-EXPIRED{background:#eee;color:var(--muted)}
+  .b-INCONCLUSIVE{background:var(--warn-soft);color:var(--warn)}
+  .b-REJECTED{background:var(--bad-soft);color:var(--bad)}
+  .b-PENDING{background:#eef; color:#445}
+  .kv{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+  .kv:last-child{border-bottom:0}
+  .kv .k{color:var(--muted)}
+  .kv .v{text-align:right;word-break:break-all;max-width:60%}
+  .walletbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:18px 0 4px}
+  .chip{background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:6px 14px;font-size:13px;cursor:pointer}
+  .chip.active{border-color:var(--accent);background:var(--accent-soft);font-weight:600}
+  .chip .bal{color:var(--muted);font-size:12px;margin-left:6px}
+  .records{margin-top:8px}
+  .record{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:10px;background:#fdfdfc}
+  .record .top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .record .title{font-weight:650;font-size:14.5px}
+  .record .meta{color:var(--muted);font-size:12.5px;margin-top:4px;word-break:break-all}
+  .crit{margin-top:8px;font-size:13px;color:var(--muted)}
+  .empty{color:var(--muted);font-size:13.5px;padding:8px 0}
+  .actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .actions button{padding:7px 14px;font-size:13px}
+  footer{max-width:960px;margin:0 auto;padding:26px 20px;color:var(--muted);font-size:12.5px}
+  a{color:var(--accent)}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:sp 1s linear infinite;vertical-align:-2px;margin-right:6px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .addr{font-family:ui-monospace,Menlo,monospace;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><h1>MatchStake</h1><span class="tag">on GenLayer · studionet</span></div>
+  <p class="sub">Trustless buyer–seller matching. Buyers post requests with criteria and a GEN deposit; sellers answer with a verifiable public listing. AI validators judge every criterion; the contract — never the model — derives the verdict and moves the money.</p>
+</header>
+<main>
+  <div class="walletbar" id="walletbar"></div>
+  <div class="status" id="walletStatus">No wallet connected — create one to interact.</div>
+
+  <div class="grid" style="margin-top:14px">
+    <div class="card">
+      <h2><span class="dot"></span>Buyer — open a request</h2>
+      <label>Title</label>
+      <input id="reqTitle" placeholder="e.g. Handmade ceramic mugs, 20 pcs">
+      <label>Criteria (one per line, objective &amp; checkable)</label>
+      <textarea id="reqCriteria" placeholder="price under 50 GEN per unit&#10;ships within 7 days"></textarea>
+      <label>Open period (seconds, min 300)</label>
+      <input id="reqSeconds" value="3600" type="number" min="300">
+      <div class="row" style="margin-top:14px">
+        <button class="primary" id="btnCreate">Create request + deposit 0.1 GEN</button>
+      </div>
+      <div class="status" id="createStatus"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>Seller — submit an offer</h2>
+      <label>Request ID</label>
+      <input id="offReq" placeholder="1">
+      <label>Public listing URL (https)</label>
+      <input id="offUrl" placeholder="https://…/my-listing">
+      <label>Note (optional)</label>
+      <input id="offNote" placeholder="short pitch">
+      <div class="actions" style="margin-top:14px">
+        <button class="primary" id="btnOffer">Submit offer</button>
+      </div>
+      <div class="status" id="offerStatus">After submitting, add the marker line <b>MatchStake-Listing-Key: &lt;key&gt;</b> to your listing page, then evaluate.</div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>Evaluate an offer</h2>
+      <label>Offer ID</label>
+      <input id="evOffer" placeholder="1">
+      <div class="actions" style="margin-top:14px">
+        <button class="primary" id="btnEvaluate">Run AI matching</button>
+        <button class="ghost" id="btnRefresh">Refresh lists</button>
+      </div>
+      <div class="status" id="evStatus"></div>
+      <div id="lastVerdict" style="margin-top:8px"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>Treasury</h2>
+      <div id="treasury"><div class="empty">Connect a wallet to see claimable funds.</div></div>
+      <div class="actions" style="margin-top:10px">
+        <button class="ghost" id="btnClaim">Claim</button>
+        <button class="ghost" id="btnFaucet">Faucet 5 GEN</button>
+      </div>
+      <div class="status" id="treasuryStatus"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h2><span class="dot"></span>Open requests</h2>
+    <div id="reqList" class="records"><div class="empty">Loading…</div></div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h2><span class="dot"></span>Recent offers</h2>
+    <div id="offerList" class="records"><div class="empty">Loading…</div></div>
+  </div>
+</main>
+<footer>MatchStake demo · Intelligent Contract + AI-validator consensus · verdicts derived deterministically on-chain · submit on GenLayer Portal by owner</footer>
+
+<script>
+const CONTRACT_KEY = 'matchstake_contract';
+let CONTRACT = localStorage.getItem(CONTRACT_KEY) || '';
+const RPC = 'https://studio.genlayer.com/api';
+let SDKC, client;
+const wallets = JSON.parse(localStorage.getItem('matchstake_wallets') || '[]');
+let activeIdx = parseInt(localStorage.getItem('matchstake_active') || '-1');
+
+function init(){
+  SDKC = window.GenLayerSDK;
+  client = SDKC.createClient({ chain: SDKC.studionet });
+}
+function saveWallets(){ localStorage.setItem('matchstake_wallets', JSON.stringify(wallets)); localStorage.setItem('matchstake_active', String(activeIdx)); }
+function active(){ return activeIdx >= 0 && activeIdx < wallets.length ? wallets[activeIdx] : null; }
+function short(a){ return a ? a.slice(0,6) + '…' + a.slice(-4) : ''; }
+
+function renderWallets(){
+  const bar = document.getElementById('walletbar');
+  bar.innerHTML = '';
+  wallets.forEach((w,i)=>{
+    const c = document.createElement('div');
+    c.className = 'chip addr' + (i===activeIdx?' active':'');
+    c.innerHTML = w.name + ' · ' + short(w.address) + ' <span class="bal"></span>';
+    c.onclick = ()=>{ activeIdx = i; saveWallets(); renderWallets(); refreshAll(); };
+    c.querySelector('.bal').textContent = (w.balance!=null? (Number(w.balance)/1e18).toFixed(2)+' GEN':'');
+    bar.appendChild(c);
+  });
+  const add = document.createElement('div');
+  add.className='chip'; add.textContent = '+ New wallet';
+  add.onclick = async ()=>{
+    const pk = SDKC.generatePrivateKey();
+    const acc = SDKC.createAccount(pk);
+    wallets.push({name:'W'+(wallets.length+1), pk, address:acc.address, balance:null});
+    activeIdx = wallets.length-1; saveWallets(); renderWallets();
+    document.getElementById('walletStatus').textContent = 'Wallet created: ' + acc.address;
+    await fund(acc.address);
+    refreshAll();
+  };
+  bar.appendChild(add);
+}
+
+async function fund(address){
+  try{
+    document.getElementById('walletStatus').textContent = 'Funding ' + short(address) + ' from studionet faucet…';
+    await client.request({ method:'sim_fundAccount', params:[address, 5e18] });
+    document.getElementById('walletStatus').textContent = 'Funded ✓';
+  }catch(e){ document.getElementById('walletStatus').textContent = 'Faucet: ' + e.message; }
+}
+
+function setStatus(id, msg, cls){ const el=document.getElementById(id); el.textContent=msg||''; el.className='status '+(cls||''); }
+function busy(id, msg){ setStatus(id, '⏳ ' + msg); }
+
+async function read(fn, args){
+  const acc = active();
+  return client.readContract({ address: CONTRACT, functionName: fn, args: args||[], account: acc?{address:acc.address}:undefined });
+}
+async function sendWrite(fn, args, statusId, action){
+  const w = active();
+  if(!w){ setStatus(statusId, 'No wallet connected.', 'err'); return null; }
+  const acc = SDKC.createAccount(w.pk);
+  try{
+    busy(statusId, 'sending transaction…');
+    const hash = await client.writeContract({ address: CONTRACT, functionName: fn, args, account: acc });
+    busy(statusId, 'waiting for consensus (this can take 45–120 s)… ' + short(hash));
+    let receipt=null;
+    try{
+      receipt = await client.waitForTransactionReceipt({ hash, status: SDKC.TransactionStatus.ACCEPTED, interval: 5000, retries: 40 });
+    }catch(_){}
+    const leader = receipt && receipt.consensus_data && receipt.consensus_data.leader_receipt;
+    const exec = Array.isArray(leader) && leader.length ? leader[0].execution_result : undefined;
+    if(exec === 'FAILURE' || exec === 'ERROR'){
+      const stderr = String((leader && leader[0] && leader[0].genvm_result && leader[0].genvm_result.stderr) || '');
+      const m = stderr.match(/AssertionError: (.+)/) || stderr.match(/UserError: (.+)/);
+      setStatus(statusId, 'On-chain revert: ' + (m?m[1]:stderr.slice(-200) || fn), 'err');
+      return null;
+    }
+    // readable return payload
+    let readable = null;
+    try{
+      const payload = leader && leader[0] && leader[0].result && leader[0].result.payload;
+      if(payload && payload.readable) readable = JSON.parse(payload.readable.replace(/^"|"$/g,''));
+    }catch(_){}
+    return { hash, readable };
+  }catch(e){
+    setStatus(statusId, 'Error: ' + (e.message||e), 'err');
+    return null;
+  }
+}
+
+/* ---------- actions ---------- */
+document.getElementById('btnCreate').onclick = async ()=>{
+  const title = document.getElementById('reqTitle').value.trim();
+  const crit = document.getElementById('reqCriteria').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const secs = document.getElementById('reqSeconds').value || '3600';
+  if(!title || !crit.length){ setStatus('createStatus','Title and at least one criterion required.','err'); return; }
+  if(!CONTRACT){ setStatus('createStatus','Deploy the contract first (see README).','err'); return; }
+  const r = await sendWrite('create_request', [title, JSON.stringify(crit), String(secs)], 'createStatus');
+  if(r){ setStatus('createStatus', 'Request #' + (r.readable||'?') + ' created ✓', 'ok'); refreshAll(); }
+};
+document.getElementById('btnOffer').onclick = async ()=>{
+  const rid = document.getElementById('offReq').value.trim();
+  const url = document.getElementById('offUrl').value.trim();
+  const note = document.getElementById('offNote').value.trim();
+  const r = await sendWrite('submit_offer', [rid, url, note], 'offerStatus');
+  if(r){
+    setStatus('offerStatus', 'Offer #' + (r.readable||'?') + ' submitted ✓ — now add the marker line to your listing page, then evaluate.', 'ok');
+    const oid = r.readable;
+    try{
+      const off = JSON.parse(await read('get_offer', [String(oid)]));
+      setStatus('offerStatus', 'Offer #' + oid + ' ✓ — marker: MatchStake-Listing-Key: ' + off.listing_key, 'ok');
+    }catch(_){}
+    refreshAll();
+  }
+};
+document.getElementById('btnEvaluate').onclick = async ()=>{
+  const oid = document.getElementById('evOffer').value.trim();
+  const box = document.getElementById('lastVerdict');
+  box.innerHTML = '<span class="spinner"></span>validators are fetching the listing and judging criteria…';
+  const r = await sendWrite('evaluate_offer', [oid], 'evStatus');
+  if(r && r.readable){
+    const v = r.readable.verdict;
+    const color = v==='MATCH'?'var(--accent)':v==='NO_MATCH'?'var(--bad)':'var(--warn)';
+    box.innerHTML = 'Verdict: <span class="badge" style="background:'+color+';color:#fff">'+v+'</span> · deposit moved: ' + (r.readable.deposit_moved?'yes':'no');
+    setStatus('evStatus','Consensus reached ✓','ok');
+    refreshAll();
+  } else { box.innerHTML=''; }
+};
+document.getElementById('btnClaim').onclick = async ()=>{
+  const r = await sendWrite('claim', [], 'treasuryStatus');
+  if(r){ setStatus('treasuryStatus','Claimed ' + (r.readable? Number(r.readable.claimed)/1e18 + ' GEN':'✓'), 'ok'); refreshAll(); }
+};
+document.getElementById('btnFaucet').onclick = async ()=>{
+  const w = active(); if(!w){ setStatus('treasuryStatus','No wallet.','err'); return; }
+  await fund(w.address); refreshAll();
+};
+document.getElementById('btnRefresh').onclick = refreshAll;
+
+/* ---------- render ---------- */
+function fmtCriteria(req){
+  try{ return JSON.parse(req.criteria).map(c=>'• '+c).join('<br>'); }catch{ return req.criteria; }
+}
+async function refreshAll(){
+  if(!CONTRACT){ document.getElementById('reqList').innerHTML = '<div class="empty">Contract not deployed yet — set the address in localStorage (matchstake_contract) after deployment.</div>'; return; }
+  try{
+    const stats = JSON.parse(await read('get_stats'));
+    document.getElementById('reqTitle') && null;
+    const w = active();
+    if(w){
+      const cl = JSON.parse(await read('get_claimable', [w.address]));
+      document.getElementById('treasury').innerHTML =
+        '<div class="kv"><span class="k">Wallet</span><span class="v addr">'+w.address+'</span></div>' +
+        '<div class="kv"><span class="k">Claimable</span><span class="v">'+(Number(cl.amount)/1e18).toFixed(4)+' GEN</span></div>' +
+        '<div class="kv"><span class="k">Network totals</span><span class="v">'+stats.requests_created+' req · '+stats.matches+' matched · '+stats.no_matches+' refunded · '+stats.inconclusives+' inconclusive</span></div>';
+    }
+    // requests: scan ids 1..N
+    const reqList = document.getElementById('reqList');
+    reqList.innerHTML='';
+    const n = parseInt(stats.requests_created||'0');
+    if(!n) reqList.innerHTML = '<div class="empty">No requests yet.</div>';
+    for(let i=n;i>=1;i--){
+      try{
+        const r = JSON.parse(await read('get_request',[String(i)]));
+        const div = document.createElement('div'); div.className='record';
+        div.innerHTML = '<div class="top"><span class="title">#'+r.id+' — '+r.title+'</span><span class="badge b-'+r.status+'">'+r.status+'</span></div>' +
+          '<div class="meta">buyer <span class="addr">'+short(r.buyer)+'</span> · deposit '+(Number(r.deposit)/1e18)+' GEN · deadline in '+Math.max(0,Math.round((+r.deadline - Date.now()/1000)/60))+' min</div>' +
+          '<div class="crit">'+fmtCriteria(r)+'</div>';
+        reqList.appendChild(div);
+        await new Promise(res=>setTimeout(res,300)); // RPC pacing
+      }catch(_){}
+    }
+    // offers
+    const offList = document.getElementById('offerList');
+    offList.innerHTML='';
+    const m = parseInt(stats.offers_submitted||'0');
+    if(!m) offList.innerHTML = '<div class="empty">No offers yet.</div>';
+    for(let i=m;i>=1 && i>m-12;i--){
+      try{
+        const o = JSON.parse(await read('get_offer',[String(i)]));
+        const div = document.createElement('div'); div.className='record';
+        div.innerHTML = '<div class="top"><span class="title">#'+o.id+' → request '+o.request_id+'</span><span class="badge b-'+o.status+'">'+o.status+'</span></div>' +
+          '<div class="meta">seller <span class="addr">'+short(o.seller)+'</span> · <a href="'+o.listing_url+'" target="_blank">'+short(o.listing_url)+'</a></div>';
+        offList.appendChild(div);
+        await new Promise(res=>setTimeout(res,300));
+      }catch(_){}
+    }
+    renderWallets();
+  }catch(e){
+    document.getElementById('reqList').innerHTML = '<div class="empty">Read failed: '+(e.message||e)+'</div>';
+  }
+}
+
+/* boot */
+(async ()=>{
+  try{ init(); }catch(e){ document.body.innerHTML = '<main><div class="card">SDK failed to load: '+e.message+'</div></main>'; return; }
+  renderWallets();
+  await refreshAll();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+scripts/.deployer_key.json
+scripts/deployed_studionet.json
+artifacts/
+__pycache__/
+.pytest_cache/
