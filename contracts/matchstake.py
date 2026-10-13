@@ -24,10 +24,18 @@ class MatchStake(gl.Contract):
 
     Consequences (money movement only in the deterministic layer):
         MATCH        -> buyer deposit is earmarked to the seller (claimable)
-        NO_MATCH     -> buyer's deposit is returned to their claimable pot
-        INCONCLUSIVE -> nobody is paid; a re-evaluation may be attempted
-                        until the request's deadline passes, after which the
-                        deposit returns to the buyer.
+        NO_MATCH     -> ONLY that offer is rejected; the request stays OPEN
+                        with its deposit escrowed, so one seller's failure
+                        can never terminate the buyer's request. The buyer
+                        may keep collecting offers until the deadline, or
+                        reclaim the deposit early via cancel_request.
+        INCONCLUSIVE -> nobody is paid; the offer may be re-evaluated
+                        (documented retry path) until the request deadline.
+
+    Recovery paths for the deposit (never stuck, never misleading):
+        cancel_request — buyer-only, while the request is OPEN: pending/
+        inconclusive offers are voided and the deposit returns to the buyer.
+        expire_request — permissionless, after the deadline: same outcome.
 
     Failed/absent listings or LLM failures map to INCONCLUSIVE — never to a
     payout or a forfeit. INCONCLUSIVE records stay in history and may be
@@ -65,6 +73,7 @@ class MatchStake(gl.Contract):
             "no_matches": "0",
             "inconclusives": "0",
             "expired": "0",
+            "cancelled": "0",
             "paid_out": "0",
         })
         self.owner = self._addr_str(gl.message.sender_address)
@@ -148,7 +157,33 @@ class MatchStake(gl.Contract):
         req = self._load_request(request_id)
         assert req["status"] == "OPEN", "not_open"
         assert self._now() > int(req["deadline"]), "deadline_not_reached"
-        return self._finalize(req, "EXPIRED", "", "")
+        return self._close_and_refund(req, "EXPIRED")
+
+    @gl.public.write
+    def cancel_request(self, request_id: str) -> str:
+        """Buyer-only early recovery while the request is OPEN.
+
+        Voids every non-terminal offer (PENDING / INCONCLUSIVE — neither has
+        moved money) and returns the deposit to the buyer's claimable pot.
+        This keeps the deposit unambiguously recoverable at ANY time while
+        the request is open, not only by waiting for expiry. Terminal offers
+        (MATCHED = deposit already earmarked to the seller) block nothing
+        here because a MATCHED offer has already closed the request.
+        """
+        req = self._load_request(request_id)
+        assert req["status"] == "OPEN", "not_open"
+        assert self._addr_str(gl.message.sender_address) == str(req["buyer"]), \
+            "only_buyer"
+        for oid in [o for o in req.get("offers", "").split(",") if o]:
+            offer = json.loads(self.offers[oid])
+            if offer["status"] in ("PENDING", "INCONCLUSIVE"):
+                offer["status"] = "VOIDED"
+                self.offers[oid] = json.dumps(offer)
+        return self._close_and_refund(req, "CANCELLED")
+
+    def _close_and_refund(self, req: dict, status: str) -> str:
+        """Terminal non-match close: return the deposit to the buyer."""
+        return self._finalize(req, status, "", str(req["buyer"]))
 
     # ------------------------------------------------------------------ #
     # seller side
@@ -205,13 +240,14 @@ class MatchStake(gl.Contract):
           any UNCERTAIN / no signal -> INCONCLUSIVE
           all PASS                  -> MATCH
         Every LLM / fetch failure path lands in INCONCLUSIVE and moves no
-        money. MATCH earmarks the deposit to the seller; NO_MATCH returns it
-        to the buyer's claimable pot.
+        money. MATCH earmarks the deposit to the seller. NO_MATCH rejects
+        ONLY this offer — the request stays OPEN and other sellers may
+        still be evaluated or submit new offers.
 
         An INCONCLUSIVE offer may be re-evaluated (fresh page content, e.g.
         the seller added the required marker) until the request deadline;
-        this is the documented recovery path. Terminal states (MATCHED,
-        REJECTED) can never be re-evaluated.
+        this is the documented retry path. Terminal states (MATCHED,
+        REJECTED, VOIDED) can never be re-evaluated.
         """
         offer = json.loads(self._get(self.offers, offer_id, "offer"))
         assert offer["status"] in ("PENDING", "INCONCLUSIVE"), "offer_not_pending"
@@ -304,18 +340,19 @@ class MatchStake(gl.Contract):
                 "deposit_to": res["deposit_to"],
             })
 
-        # NO_MATCH: refund the deposit to the buyer's claimable pot.
+        # NO_MATCH: reject ONLY this offer. The request stays OPEN with its
+        # deposit escrowed — one seller's failure cannot terminate the
+        # buyer's request. Deposit remains recoverable via cancel_request
+        # (buyer, anytime while OPEN) or expire_request (after deadline).
         offer["status"] = "REJECTED"
         offer["verdict"] = self._verdict_json(verdict, labels)
         self.offers[offer["id"]] = json.dumps(offer)
         self._bump("no_matches")
-        res = json.loads(self._finalize(req, "REFUNDED", "", str(req["buyer"])))
         return json.dumps({
             "verdict": verdict,
-            "deposit_moved": True,
-            "request_id": res["request_id"],
-            "status": res["status"],
-            "deposit_to": res["deposit_to"],
+            "deposit_moved": False,
+            "request_id": req["id"],
+            "request_status": req["status"],
         })
 
     def _finalize(self, req: dict, status: str, winner_offer: str, seller: str) -> str:
@@ -335,14 +372,16 @@ class MatchStake(gl.Contract):
             s = json.loads(self.stats)
             s["paid_out"] = str(int(s["paid_out"]) + int(req["deposit"]))
             self.stats = json.dumps(s)
-        else:  # EXPIRED or (unused) NO_MATCH path
+        else:  # EXPIRED or CANCELLED: deposit returns to the buyer
             self._credit(addr, req["deposit"])
             if status == "EXPIRED":
                 self._bump("expired")
+            elif status == "CANCELLED":
+                self._bump("cancelled")
         return json.dumps({
             "request_id": req["id"],
             "status": status,
-            "verdict": status if status in ("MATCHED", "EXPIRED") else status,
+            "verdict": status if status in ("MATCHED", "EXPIRED", "CANCELLED") else status,
             "winner_offer": winner_offer,
             "deposit_to": seller if status == "MATCHED" else addr,
         })

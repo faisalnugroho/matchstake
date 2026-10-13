@@ -12,10 +12,12 @@ Marketplace matching today needs a trusted middleman to decide "does this seller
 2. **Seller** submits an OFFER pointing at a public listing URL they control (`submit_offer`). The contract returns a unique **listing key** (`MatchStake-Listing-Key: MSK-…`) that the seller must add to the listing page — this binds the offer to a re-fetchable, independently verifiable public page.
 3. **Anyone** triggers `evaluate_offer`. Inside the equivalence block every validator independently fetches the listing URL, verifies the marker key, and asks its LLM to label every criterion PASS / FAIL / UNCERTAIN with quoted evidence from the page.
 4. **The contract — never the model — derives the verdict:**
-   - any FAIL → `NO_MATCH` (deposit refunded to the buyer, request closed)
-   - any UNCERTAIN or missing signal → `INCONCLUSIVE` (nothing moves, re-evaluation of a new offer possible)
+   - any FAIL → `NO_MATCH` (ONLY that offer is rejected; the request stays OPEN with its deposit escrowed — one seller's failure can never terminate the buyer's request)
+   - any UNCERTAIN or missing signal → `INCONCLUSIVE` (nothing moves; the SAME offer may be re-evaluated — the documented retry path)
    - all PASS → `MATCH` (deposit credited to the seller)
-5. Credits are withdrawn with `claim()`. `expire_request` is a **permissionless recovery path**: after the deadline an OPEN request's deposit returns to the buyer — no stuck capital, no capacity dead-end.
+5. Credits are withdrawn with `claim()`. Deposit recovery — never stuck, never only-by-expiry:
+   - `cancel_request(request_id)` — buyer-only, ANY time while the request is OPEN: non-terminal offers are voided and the deposit returns to the buyer.
+   - `expire_request(request_id)` — permissionless, after the deadline: same outcome.
 
 ## Why it fits GenLayer
 
@@ -24,7 +26,7 @@ Marketplace matching today needs a trusted middleman to decide "does this seller
 - Real on-chain consequence: the deposit moves only on a deterministic verdict.
 - Validators compare only stable decision substance (the marker check + the per-criterion status vector). Evidence *wording* varies per model and is never compared — the equivalence principle compares statuses, not prose.
 - Every failure mode (dead URL, missing marker, malformed model output, fetch error) maps to a well-formed INCONCLUSIVE that never moves money.
-- Dispute/recovery designed in from v1: permissionless deadline expiry refunds the buyer.
+- Dispute/recovery designed in from v1: buyer `cancel_request` (anytime while OPEN) + permissionless deadline expiry refund — the deposit is never stuck and never recoverable only by expiry.
 
 ## Layout
 
@@ -51,7 +53,7 @@ GitHub Pages (`.github/workflows/deploy-pages.yml`), single page, in-browser bur
 
 ## Known limitations
 
-- Per-request, one offer per seller; a NO_MATCH closes the request (buyer opens a new one to try other sellers) — per-offer verdicts are final by design.
+- Per-request, one offer per seller; a NO_MATCH rejects that offer only — the request stays OPEN so other sellers can still compete; the buyer can reclaim anytime via `cancel_request`.
 - `evaluate_offer` consumes a full consensus round (~45–120 s on studionet).
 - Listing pages must be validator-fetchable (raw GitHub-hosted pages are proven to work; SPA-only pages yield no text).
 - studionet only at this stage; Bradbury deployment is a follow-up.

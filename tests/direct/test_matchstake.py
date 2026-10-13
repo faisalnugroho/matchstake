@@ -165,8 +165,10 @@ def test_evaluate_match_full_flow(setup):
     assert stats["matches"] == "1" and stats["paid_out"] == str(10**18)
 
 
-def test_evaluate_no_match_refunds_buyer(setup):
-    """Any FAIL -> NO_MATCH, deposit returned to buyer claimable."""
+def test_evaluate_no_match_rejects_offer_only(setup):
+    """Any FAIL -> NO_MATCH rejects ONLY that offer. The request stays OPEN
+    with its deposit escrowed — one seller's failure can never terminate
+    the buyer's request."""
     vm, contract = setup
     rid = _create_request(vm, contract)
     oid = contract.submit_offer(rid, "https://shop.example.com/mug", "")
@@ -177,14 +179,131 @@ def test_evaluate_no_match_refunds_buyer(setup):
 
     res = json.loads(contract.evaluate_offer(oid))
     assert res["verdict"] == "NO_MATCH"
+    assert res["deposit_moved"] is False
     offer = json.loads(contract.get_offer(oid))
     assert offer["status"] == "REJECTED"
     req = json.loads(contract.get_request(rid))
-    # NO_MATCH closes the request and refunds the deposit to the buyer.
-    assert req["status"] == "REFUNDED"
-    assert json.loads(contract.get_claimable(req["buyer"]))["amount"] == str(10**18)
+    # request remains OPEN; nothing refunded
+    assert req["status"] == "OPEN"
+    buyer = req["buyer"]
+    assert json.loads(contract.get_claimable(buyer))["amount"] == "0"
+    assert contract.get_open_request_count(buyer) == "1"
     stats = json.loads(contract.get_stats())
     assert stats["no_matches"] == "1"
+
+
+def test_no_match_does_not_block_other_sellers(setup):
+    """Seller 1 gets NO_MATCH; seller 2 can still submit and MATCH — the
+    buyer's request survives an individual seller's failure."""
+    vm, contract = setup
+    rid = _create_request(vm, contract)
+    o1 = contract.submit_offer(rid, "https://s1.example.com/p", "")
+    k1 = json.loads(contract.get_offer(o1))["listing_key"]
+    vm.mock_web(r"https://s1\.example\.com/p", {"status": 200, "body": BAD_PAGE.format(key=k1)})
+    vm.mock_llm(*make_llm(k1, FAIL_JSON))
+    assert json.loads(contract.evaluate_offer(o1))["verdict"] == "NO_MATCH"
+
+    # request still open: a second seller can offer and win
+    assert json.loads(contract.get_request(rid))["status"] == "OPEN"
+    from gltest.direct.loader import create_address
+    orig = vm.sender
+    vm.sender = create_address("seller2")
+    try:
+        o2 = contract.submit_offer(rid, "https://s2.example.com/p", "")
+    finally:
+        vm.sender = orig
+    k2 = json.loads(contract.get_offer(o2))["listing_key"]
+    vm.clear_mocks()
+    vm.mock_web(r"https://s2\.example\.com/p", {"status": 200, "body": GOOD_PAGE.format(key=k2)})
+    vm.mock_llm(*make_llm(k2, PASS_JSON))
+    res = json.loads(contract.evaluate_offer(o2))
+    assert res["verdict"] == "MATCH"
+    req = json.loads(contract.get_request(rid))
+    assert req["status"] == "MATCHED"
+    assert req["winner_offer"] == o2
+    seller2 = json.loads(contract.get_offer(o2))["seller"]
+    assert json.loads(contract.get_claimable(seller2))["amount"] == str(10**18)
+
+
+def test_create_request_payable_deposit_is_msg_value(setup):
+    """Source-level payable path: the deposit MUST arrive as tx value.
+    Zero value reverts (deposit_required); the recorded deposit equals
+    exactly the value sent with the call."""
+    vm, contract = setup
+    with pytest.raises(Exception, match="deposit_required"):
+        contract.create_request("t", BUYER_CRITERIA, "3600")
+    rid = _create_request(vm, contract, deposit_wei=777)
+    req = json.loads(contract.get_request(rid))
+    assert req["deposit"] == "777"          # deposit == msg.value, verbatim
+    # the escrowed deposit is the amount later recoverable/settleable
+    vm, contract = setup
+    rid2 = _create_request(vm, contract)
+    contract.cancel_request(rid2)
+    assert json.loads(contract.get_claimable(direct_owner_addr(vm)))["amount"] == str(10**18)
+
+
+def test_cancel_request_buyer_reclaims_deposit(setup):
+    """Buyer-only early recovery while OPEN: non-terminal offers are voided
+    and the deposit becomes claimable — not recoverable only by expiry."""
+    vm, contract = setup
+    rid = _create_request(vm, contract)
+    # a PENDING offer and an INCONCLUSIVE offer both exist (distinct sellers)
+    from gltest.direct.loader import create_address
+    orig = vm.sender
+    o1 = contract.submit_offer(rid, "https://s1.example.com/p", "")
+    vm.sender = create_address("seller2")
+    try:
+        o2 = contract.submit_offer(rid, "https://s2.example.com/p", "")
+    finally:
+        vm.sender = orig
+    k2 = json.loads(contract.get_offer(o2))["listing_key"]
+    vm.mock_web(r"https://s2\.example\.com/p", {"status": 200, "body": "<html>no marker</html>"})
+    vm.mock_llm(*make_llm(k2, PASS_JSON))
+    assert json.loads(contract.evaluate_offer(o2))["verdict"] == "INCONCLUSIVE"
+
+    res = json.loads(contract.cancel_request(rid))
+    assert res["status"] == "CANCELLED"
+    assert json.loads(contract.get_offer(o1))["status"] == "VOIDED"
+    assert json.loads(contract.get_offer(o2))["status"] == "VOIDED"
+    req = json.loads(contract.get_request(rid))
+    assert req["status"] == "CANCELLED"
+    assert json.loads(contract.get_claimable(req["buyer"]))["amount"] == str(10**18)
+    assert contract.get_open_request_count(req["buyer"]) == "0"
+    stats = json.loads(contract.get_stats())
+    assert stats["cancelled"] == "1"
+    # voided offers can never be evaluated afterwards
+    with pytest.raises(Exception, match="offer_not_pending"):
+        contract.evaluate_offer(o1)
+    with pytest.raises(Exception, match="request_not_open"):
+        contract.submit_offer(rid, "https://s3.example.com/p", "")
+
+
+def test_cancel_request_only_buyer(setup):
+    vm, contract = setup
+    rid = _create_request(vm, contract)
+    from gltest.direct.loader import create_address
+    orig = vm.sender
+    vm.sender = create_address("mallory")
+    try:
+        with pytest.raises(Exception, match="only_buyer"):
+            contract.cancel_request(rid)
+    finally:
+        vm.sender = orig
+    # non-buyer cancel leaves the request untouched
+    assert json.loads(contract.get_request(rid))["status"] == "OPEN"
+
+
+def test_cancel_before_deadline_not_expire_only(setup):
+    """The deposit is recoverable BEFORE the deadline via cancel_request —
+    it is not locked until expiry."""
+    vm, contract = setup
+    rid = _create_request(vm, contract)
+    # still far from deadline — cancel works immediately
+    res = json.loads(contract.cancel_request(rid))
+    assert res["status"] == "CANCELLED"
+    assert json.loads(contract.get_claimable(direct_owner_addr(vm)))["amount"] == str(10**18)
+    with pytest.raises(Exception, match="not_open"):
+        contract.cancel_request(rid)
 
 
 def test_evaluate_inconclusive_no_money_moves(setup):
@@ -220,9 +339,9 @@ def test_evaluate_malformed_llm_fail_safe(setup):
     assert res["verdict"] == "INCONCLUSIVE"
 
 
-def test_new_request_after_refund_can_be_created(setup):
-    """After a NO_MATCH refund the request is terminal; a buyer opens a new
-    request to try other sellers (per-offer verdicts are final)."""
+def test_new_request_after_no_match_still_open_then_cancel(setup):
+    """After a NO_MATCH the request is still OPEN (per-offer verdicts are
+    final for that offer only); the buyer may cancel to reclaim early."""
     vm, contract = setup
     rid = _create_request(vm, contract)
     oid = contract.submit_offer(rid, "https://s1.example.com/p", "")
@@ -230,11 +349,15 @@ def test_new_request_after_refund_can_be_created(setup):
     vm.mock_web(r"https://s1\.example\.com/p", {"status": 200, "body": BAD_PAGE.format(key=k1)})
     vm.mock_llm(*make_llm(k1, FAIL_JSON))
     assert json.loads(contract.evaluate_offer(oid))["verdict"] == "NO_MATCH"
-    # terminal: further evaluation refused
-    with pytest.raises(Exception, match="request_not_open"):
+    # request survived the seller's failure; rejected offer is terminal
+    req = json.loads(contract.get_request(rid))
+    assert req["status"] == "OPEN"
+    with pytest.raises(Exception, match="duplicate_seller_offer"):
         contract.submit_offer(rid, "https://s2.example.com/p", "")
-    # buyer's capital recovered; a fresh request can be opened
-    buyer = json.loads(contract.get_request(rid))["buyer"]
+    # buyer reclaims via cancel_request (early recovery, not expiry)
+    res = json.loads(contract.cancel_request(rid))
+    assert res["status"] == "CANCELLED"
+    buyer = req["buyer"]
     assert json.loads(contract.get_claimable(buyer))["amount"] == str(10**18)
 
 

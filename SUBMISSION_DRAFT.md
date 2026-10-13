@@ -25,10 +25,12 @@ MatchStake makes that judgment trustless.
 2. `submit_offer(request_id, listing_url, note)` — seller submits a public https listing URL. The contract mints a unique listing key (`MSK-<offer>-<ts>`); the seller must publish the line `MatchStake-Listing-Key: <key>` on that page.
 3. `evaluate_offer(offer_id)` — anyone triggers. Inside the equivalence block each validator independently fetches the listing page, verifies the marker key, then asks its LLM to label every criterion PASS / FAIL / UNCERTAIN with a quoted fragment from the page.
 4. **The contract derives the verdict** (pure function of the labels — the model never picks the outcome):
-   - any FAIL → `NO_MATCH` (deposit refunded to the buyer, request closed)
+   - any FAIL → `NO_MATCH` (ONLY that offer is rejected; the request stays OPEN with its deposit escrowed)
    - any UNCERTAIN / no signal → `INCONCLUSIVE` (nothing moves)
    - all PASS → `MATCH` (deposit credited to the seller)
-5. `claim()` withdraws credited funds. `expire_request(request_id)` is a permissionless recovery path: after the deadline an OPEN request's deposit returns to the buyer.
+5. `claim()` withdraws credited funds. Deposit recovery — never stuck, never only-by-expiry:
+   - `cancel_request(request_id)` — buyer-only, ANY time while the request is OPEN: non-terminal offers are voided and the deposit returns to the buyer's claimable pot.
+   - `expire_request(request_id)` — permissionless, after the deadline: same outcome.
 
 **Why the LLM use is meaningful**
 - Multi-step: fetch → verify marker → assess each criterion against page text → cite evidence. Not one-shot classification.
@@ -38,20 +40,24 @@ MatchStake makes that judgment trustless.
 - Equivalence compares only stable decision substance: the marker check plus the per-criterion **status vector**. Evidence wording varies between models and is never compared.
 
 **Recovery / capacity design**
-- `INCONCLUSIVE` offers may be re-evaluated (e.g. the seller published the marker) until the deadline — proven live.
-- Terminal states (`MATCHED`, `REJECTED`) can never be re-evaluated.
-- `expire_request` guarantees no stuck capital; the per-owner open-request cap (10) is paired with that permissionless release path.
+- `INCONCLUSIVE` offers may be re-evaluated (e.g. the seller published the marker) until the deadline — proven live. This is the documented retry path.
+- Terminal states (`MATCHED`, `REJECTED`, `VOIDED`) can never be re-evaluated.
+- A `NO_MATCH` verdict is terminal for THAT OFFER only — one seller's failure can never terminate the buyer's request; other sellers may still offer and win on the same request.
+- `cancel_request` (buyer, anytime while OPEN) + `expire_request` (permissionless, after deadline) guarantee the deposit is never stuck and never recoverable only by expiry.
+- The per-owner open-request cap (10) is paired with those release paths.
 
-## Test evidence — 22/22 direct-mode tests
+## Test evidence — 27/27 direct-mode tests
 
 ```
 $ PYTHONDONTWRITEBYTECODE=1 python -m pytest tests/direct -q -p no:cacheprovider
-22 passed
+27 passed
 ```
 
-Covers: happy MATCH settlement, NO_MATCH refund, INCONCLUSIVE no-movement, malformed-LLM fail-safe,
-missing-marker fail-safe, recovery re-evaluation, terminal-state guard, all input guards,
-deadline expiry refund, claim, and three validator-agreement cases (agree on identical labels,
+Covers: happy MATCH settlement, NO_MATCH offer-only rejection, NO_MATCH-does-not-block-other-sellers,
+payable deposit path (deposit == msg.value; zero value reverts), INCONCLUSIVE no-movement,
+malformed-LLM fail-safe, missing-marker fail-safe, recovery re-evaluation, terminal-state guard,
+all input guards, deadline expiry refund, buyer cancel & reclaim (incl. only-buyer guard),
+claim, and three validator-agreement cases (agree on identical labels,
 agree with differently-worded evidence, disagree on divergent statuses).
 
 `genvm-lint check contracts/matchstake.py` → ✓ Lint passed (3 checks), ✓ Validation passed.
