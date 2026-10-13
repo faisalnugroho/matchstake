@@ -95,5 +95,62 @@
   {
     "ts": "2026-10-13T08:00:47Z",
     "event": "smoke_done"
+  },
+  {
+    "ts": "2026-10-13T08:20:00Z",
+    "event": "v3_deploy_full_consensus",
+    "address": "0x2780D1fc27F35dd887aC42E247e2d54e2cEDf718",
+    "deploy_tx": "0x3e6125b039a34ade95242244252d7f048f6950c1ac70d6d754e71c2513982a21",
+    "code_sha256": "e1f1cf00557fc739841d3ef10113bfae11d0282918b447d9d516a4e5e5b348f6"
+  },
+  {
+    "ts": "2026-10-13T08:20:01Z",
+    "event": "v3_payable_value_tx",
+    "fn": "create_request",
+    "tx": "0x1287c750e19d11b785cf663b773e5dbeb368593662324a2f431bddbebf214933",
+    "value_wei": "100000000000000000",
+    "note": "deposit sent as tx value; recorded deposit == msg.value"
+  },
+  {
+    "ts": "2026-10-13T08:20:02Z",
+    "event": "v3_inconclusive_then_retry_match",
+    "offer": "1",
+    "phase1_inconclusive_tx": "0xeabc35e3b28a662efd8886d29f32e79c3353d7c336f5212ca21841ab143604bd",
+    "phase2_reevaluated": "MATCHED (same offer, fresh marker on testdata/listing.html)",
+    "paid_out_wei": "100000000000000000"
+  },
+  {
+    "ts": "2026-10-13T08:20:03Z",
+    "event": "v3_cancel_request_buyer_recovery",
+    "request": "4",
+    "tx": "0x (see cancel evidence)",
+    "status": "CANCELLED",
+    "cancelled_count": "1"
+  },
+  {
+    "ts": "2026-10-13T08:20:04Z",
+    "event": "v3_claim_after_cancel",
+    "tx": "0x842a0d83d8a3b0869d94ca6eb33d352853adf121f381f3400055706e939b6c3c",
+    "claimable_after": "0",
+    "note": "0.2 GEN claimed (1e17 match payout + 1e17 cancel refund)"
+  },
+  {
+    "ts": "2026-10-13T08:20:05Z",
+    "event": "v3_final_stats",
+    "stats": {
+      "requests_created": "4",
+      "offers_submitted": "2",
+      "matches": "1",
+      "no_matches": "0",
+      "inconclusives": "2",
+      "expired": "0",
+      "cancelled": "1",
+      "paid_out": "100000000000000000"
+    }
+  },
+  {
+    "ts": "2026-10-13T08:20:06Z",
+    "event": "v3_tests",
+    "result": "27/27 direct-mode tests passed"
   }
 ]
