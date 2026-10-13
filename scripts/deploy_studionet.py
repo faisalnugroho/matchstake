@@ -96,6 +96,24 @@ def deploy():
     return client, account, addr
 
 
+def extract_id(raw):
+    """Offer/request write methods return a small-int id. The SDK surfaces it
+    as {'raw': [12, 50], 'readable': '"2"'} — pull the bare id string out.
+    Never pass the whole payload dict back as an argument."""
+    if isinstance(raw, dict):
+        readable = raw.get("readable", "")
+        if isinstance(readable, str):
+            m = re.search(r"([0-9]+)", readable)
+            if m:
+                return m.group(1)
+        return str(raw)
+    if isinstance(raw, str):
+        m = re.search(r"([0-9]+)", raw)
+        if m:
+            return m.group(1)
+    return str(raw)
+
+
 def smoke():
     client, account = get_client()
     addr = json.loads(STATE.read_text())["address"]
@@ -128,7 +146,7 @@ def smoke():
                         value=10**17)
     assert ok and rid_raw, "create_request failed"
     # readable payload is a JSON string like '"1"'
-    rid = str(rid_raw).strip('"') if not isinstance(rid_raw, dict) else str(rid_raw)
+    rid = extract_id(rid_raw)
     log("request_id", rid=rid)
 
     ok, oid_raw, _ = wd("submit_offer",
@@ -136,7 +154,7 @@ def smoke():
                          "faisalnugroho/matchstake/main/testdata/listing.html",
                          "demo offer"])
     assert ok and oid_raw, "submit_offer failed"
-    offer_id = str(oid_raw).strip('"')
+    offer_id = extract_id(oid_raw)
 
     ok, off, _ = wd("noop", [])  # not used; listing key read via view below
     # read the listing key via a view call
@@ -155,12 +173,12 @@ def smoke():
                           json.dumps(["price under 50 GEN", "ships within 7 days"]),
                           "3600"],
                          value=10**17)
-    rid2 = str(rid2_raw).strip('"')
+    rid2 = extract_id(rid2_raw)
     ok, oid2_raw, _ = wd("submit_offer",
                          [rid2, "https://raw.githubusercontent.com/"
                           "faisalnugroho/matchstake/main/testdata/listing2.html",
                           "demo offer 2"])
-    oid2 = str(oid2_raw).strip('"')
+    oid2 = extract_id(oid2_raw)
     offer2 = client.read_contract(address=addr, function_name="get_offer",
                                   args=[oid2])
     key2 = json.loads(offer2)["listing_key"]
