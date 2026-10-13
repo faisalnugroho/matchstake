@@ -46,53 +46,51 @@ MatchStake makes that judgment trustless.
 - `cancel_request` (buyer, anytime while OPEN) + `expire_request` (permissionless, after deadline) guarantee the deposit is never stuck and never recoverable only by expiry.
 - The per-owner open-request cap (10) is paired with those release paths.
 
-## Test evidence — 27/27 direct-mode tests
+## Test evidence — 33/33 direct-mode tests
 
 ```
 $ PYTHONDONTWRITEBYTECODE=1 python -m pytest tests/direct -q -p no:cacheprovider
-27 passed
+33 passed
 ```
 
-Covers: happy MATCH settlement, NO_MATCH offer-only rejection, NO_MATCH-does-not-block-other-sellers,
-payable deposit path (deposit == msg.value; zero value reverts), INCONCLUSIVE no-movement,
-malformed-LLM fail-safe, missing-marker fail-safe, recovery re-evaluation, terminal-state guard,
-all input guards, deadline expiry refund, buyer cancel & reclaim (incl. only-buyer guard),
-claim, and three validator-agreement cases (agree on identical labels,
-agree with differently-worded evidence, disagree on divergent statuses).
+Covers: happy MATCH settlement, NO_MATCH offer-only rejection (request stays OPEN),
+NO_MATCH-does-not-block-other-sellers (second seller wins same request),
+payable deposit path (deposit == msg.value; zero value reverts), INCONCLUSIVE
+no-movement, malformed-LLM fail-safe, missing-marker fail-safe, recovery
+re-evaluation, terminal-state guard, all input guards, deadline expiry refund,
+buyer cancel & reclaim (incl. only-buyer guard, pre-deadline cancel), claim,
+three validator-agreement cases, and **browser value propagation** (new
+`tests/direct/test_frontend_value_propagation.py`): the frontend passes
+DEPOSIT_WEI into create_request, sendWrite sets `opts.value`, and the bundled
+SDK forwards value into the signed consensus transaction — pinned
+source-to-source so the deposit path cannot silently regress.
 
 `genvm-lint check contracts/matchstake.py` → ✓ Lint passed (3 checks), ✓ Validation passed.
 
-## Live smoke evidence (studionet, full consensus, v2 deployment)
+## Live smoke evidence (studionet, full consensus, v3 deployment)
 
-Deployed: `0x0D2095a3e98B472c66EfF63E7990d00005d503B3`
-Deploy tx `0xb08e8181ee951eb60dab0a3ad7696c1bdb6ae5901eadfc894f6f70234018c38d` (MAJORITY_AGREE, SUCCESS)
-Deployed code sha256 == `git show HEAD:contracts/matchstake.py | sha256sum` = `3db92854250f4a0622b2e7cb04190b53fa5578cb3f680e77a52e36b416ce8fc3`
+Deployed: `0x2780D1fc27F35dd887aC42E247e2d54e2cEDf718`
+Deploy tx `0x3e6125b039a34ade95242244252d7f048f6950c1ac70d6d754e71c2513982a21` (full consensus)
+Deployed code sha256 == `sha256sum contracts/matchstake.py` = `e1f1cf00557fc739841d3ef10113bfae11d0282918b447d9d516a4e5e5b348f6`
 
 | Scenario | Tx (studionet) | Observed result |
 |---|---|---|
-| request #4 (v2 smoke round 1) | `0xca6aadddfa3a80948973409ff70134ccede29136bf3eed0c3f0ca781024912b4` | SUCCESS |
-| offer #4 submit | `0x59267059b88bc4b2f45865fcd487752beaae470d2d02f6a9c39d20d968c43189` | SUCCESS, key `MSK-4-...` |
-| request #5 (round 2) | `0x53c2e3152b3cc496a3663742422d743642a256db006c7f8ef8de8e11f330ec49` | SUCCESS |
-| offer #5 submit | `0x0a30864ac011eb5e704e098d959ae545a59724f4d1b213936e6e87122e3527c4` | SUCCESS |
-| request #6 (fail-safe + recovery) | `0xc192bcc3cb93d5c861e322833297fd8c7f65d4c9918ab259d6c5b5006bdc6b3d` | SUCCESS |
-| offer #6 submit | `0x7fd1f41248e6b353a6ff63d2c4a1b28d9d58fcbe0e3d80ce9953d030534da838` | SUCCESS |
-| **evaluate #4 (round 1)** | `0x56f5e7985f8571a6c1a7a6c2da4d234a6491884757f9f83e39f9d25ac9b3ade1` | **MATCH**, PASSx2, deposit -> seller |
-| **evaluate #5 (determinism)** | `0xd604ee53e8e59ab553f8ec8074ea478b500964db2b661d71b15709d718cc40f1` | **MATCH**, PASSx2 |
-| **evaluate #6 (no marker -> fail-safe)** | `0x22f6096f9b3645e8a0096a155411e2da55e1928deb5ec8375153426f79036eb0` | **INCONCLUSIVE**, deposit NOT moved, request stays OPEN |
-| re-eval #6 (stale CDN edge) | `0xf59d69f7e3898156e5a8f37733be994e28a8363c65d001f31d4878de79de9b4a` | INCONCLUSIVE (honest: edge served stale page) |
-| **re-eval #6 (page synced)** | `0x89c92080766a3195eaeb99805d173718310283731b25ed51ba860b0d88589cda` | **MATCH** - same-offer recovery path proven |
-| claim 0.4 GEN | `0xd1ba3acbb74312702ed9621ebfd1154187916214cbab7f1865f655df445b7f05` | SUCCESS, claimable 0.4 -> 0 |
+| **create_request with value** | `0x1287c750e19d11b785cf663b773e5dbeb368593662324a2f431bddbebf214933` | deposit sent as tx **value** (1e17 wei); recorded deposit == msg.value |
+| **evaluate: missing marker → INCONCLUSIVE** | `0xeabc35e3b28a662efd8886d29f32e79c3353d7c336f5212ca21841ab143604bd` | **INCONCLUSIVE** — no money moved, request stays OPEN |
+| **same-offer retry after marker fix** | (re-evaluate offer #1) | **MATCH** — INCONCLUSIVE retry path proven on-chain |
+| **cancel_request (buyer recovery)** | request #4 | **CANCELLED** — non-terminal offers voided, deposit credited back to buyer |
+| **claim** | `0x842a0d83d8a3b0869d94ca6eb33d352853adf121f381f3400055706e939b6c3c` | 0.2 GEN claimed (match payout + cancel refund), claimable → 0 |
 
-Final on-chain stats: 6 requests, 6 offers, 4 MATCH, 2 INCONCLUSIVE, 0.4 GEN paid out, claimable drained to 0.
-Explorer: https://explorer-studio.genlayer.com/contracts/0x0D2095a3e98B472c66EfF63E7990d00005d503B3
-Every tx above is MAJORITY_AGREE; full receipts in `scripts/deployment_log.json` (append-only).
+Final on-chain stats: 4 requests, 2 offers, 1 MATCH, 2 INCONCLUSIVE, 1 CANCELLED, 1e17 wei paid out, claimable drained to 0.
+Explorer: https://explorer-studio.genlayer.com/contracts/0x2780D1fc27F35dd887aC42E247e2d54e2cEDf718
+Full receipts in `scripts/deployment_log.json` (append-only, events `v3_*`).
 
 ## Honest scope notes
 
 - The dispute surface is the re-evaluation + deadline-expiry pair, not an in-contract appeal round.
-- A `NO_MATCH` verdict is terminal for that request: the buyer withdraws the refund and opens a
-  new request to solicit other sellers. This is a deliberate design choice (per-offer verdicts are
-  final), documented in the README.
+- A `NO_MATCH` verdict is terminal for **that offer only**; the request stays OPEN with its
+  deposit escrowed, so other sellers can still offer and win on the same request. The buyer
+  can reclaim at any time via `cancel_request`.
 - studionet only at this stage; a Bradbury deployment is a follow-up, not claimed here.
 - The frontend is the demo surface; the contribution is the Intelligent Contract.
 
