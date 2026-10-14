@@ -9,10 +9,10 @@ AI-validator matching marketplace: buyers post requirements plus a GEN deposit, 
 ## Repo
 https://github.com/faisalnugroho/matchstake
 
-## Live contract (studionet)
-`0x0D2095a3e98B472c66EfF63E7990d00005d503B3`
-Deploy tx: `0xb08e8181ee951eb60dab0a3ad7696c1bdb6ae5901eadfc894f6f70234018c38d`
-Deployed code sha256: `3db92854250f4a0622b2e7cb04190b53fa5578cb3f680e77a52e36b416ce8fc3`
+## Live contract (studionet, v3)
+`0x2780D1fc27F35dd887aC42E247e2d54e2cEDf718`
+Deploy tx: `0x3e6125b039a34ade95242244252d7f048f6950c1ac70d6d754e71c2513982a21` (full consensus)
+Deployed code sha256: `e1f1cf00557fc739841d3ef10113bfae11d0282918b447d9d516a4e5e5b348f6` — byte-identical to `contracts/matchstake.py` on the default branch.
 
 ## Full description
 
